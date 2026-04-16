@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>RememberMe Timeline v1</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<style>
+/* ================= BASE ================= */
+html, body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= MENU ================= */
+#menu {
+    height: 90px;
+    background: #333;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.menuGroup {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+}
+
+input {
+    padding: 4px;
+}
+
+/* ================= MAIN ================= */
+#main {
+    flex: 1;
+    background: #f0f0f0;
+    padding: 20px;
+}
+
+/* ================= TIMELINE ================= */
+#timeline {
+    width: 100%;
+    height: 42px;
+    background: #ddd;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Progress */
+#bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(to right, #4caf50, #8bc34a);
+}
+
+/* Marker */
+#marker {
+    position: absolute;
+    width: 4px;
+    height: 100%;
+    background: red;
+    display: none;
+}
+
+/* Timer */
+#timer {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Overlay */
+#overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(200,200,200,0.85);
+}
+
+.loader {
+    width: 18px;
+    height: 18px;
+    border: 3px solid #aaa;
+    border-top: 3px solid #333;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+/* Flipclock */
+#timer small {
+    font-size: 10px;
+    vertical-align: super;
+    opacity: 0.8;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+<div id="menu">
+
+    <div class="menuGroup">
+        Start
+        <input type="time" id="start" value="08:00">
+    </div>
+
+    <div class="menuGroup">
+        Ende
+        <input type="time" id="end" value="08:30">
+    </div>
+
+    <div class="menuGroup">
+        Timer
+        <input type="checkbox" id="timerToggle" checked>
+    </div>
+
+    <div class="menuGroup">
+        Marker
+        <input type="datetime-local" id="markerInput">
+    </div>
+
+</div>
+
+<!-- ================= MAIN ================= -->
+<div id="main">
+
+<div id="timeline">
+
+    <div id="bar"></div>
+    <div id="marker"></div>
+    <div id="timer"></div>
+
+    <div id="overlay">
+        <div class="loader"></div>
+    </div>
+
+</div>
+
+</div>
+
+<script>
+/* =========================================================
+   STATE (Single Source of Truth)
+========================================================= */
+const state = {
+    start: "08:00",
+    end: "08:30",
+    timerEnabled: true,
+    markerSeconds: null
+};
+
+/* =========================================================
+   HELPERS (pure functions)
+========================================================= */
+function toSec(t){
+    let [h,m] = t.split(":").map(Number);
+    return h*3600 + m*60;
+}
+
+function clamp(n,min,max){
+    return Math.max(min, Math.min(max,n));
+}
+
+/* =========================================================
+   RENDER
+========================================================= */
+function render(){
+
+    let now = new Date();
+    let current = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+
+    let start = toSec(state.start);
+    let end = toSec(state.end);
+
+    let duration = end - start;
+
+    /* VALIDATION */
+    if(duration <= 0){
+        $("#overlay").show();
+        $("#bar").css("width","0%");
+        $("#timer").html("");
+        return;
+    } else {
+        $("#overlay").hide();
+    }
+
+    /* PROGRESS */
+    let progress = ((current - start) / duration) * 100;
+    progress = clamp(progress,0,100);
+
+    $("#bar").css("width", progress + "%");
+
+    /* TIMER */
+    if(state.timerEnabled){
+        let remaining = Math.max(0, end - current);
+
+        let h = Math.floor(remaining/3600);
+        let m = Math.floor((remaining%3600)/60);
+        let s = remaining%60;
+
+        $("#timer").html(`${h}:${String(m).padStart(2,'0')}<small>${String(s).padStart(2,'0')}</small>`);
+    } else {
+        $("#timer").html("");
+    }
+
+    /* MARKER */
+    if(state.markerSeconds !== null){
+        let p = clamp(((state.markerSeconds-start)/duration)*100,0,100);
+        $("#marker").css("left", p + "%").show();
+    } else {
+        $("#marker").hide();
+    }
+}
+
+/* =========================================================
+   EVENTS (UI → STATE)
+========================================================= */
+$("#start").on("change", e => state.start = e.target.value);
+$("#end").on("change", e => state.end = e.target.value);
+
+$("#timerToggle").on("change", e => {
+    state.timerEnabled = e.target.checked;
+});
+
+$("#markerInput").on("change", e => {
+    let d = new Date(e.target.value);
+    state.markerSeconds =
+        d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
+});
+
+/* =========================================================
+   LOOP
+========================================================= */
+setInterval(render, 1000);
+render();
+</script>
+
+</body>
+</html>
