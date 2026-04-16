@@ -9,8 +9,6 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <style>
-
-/* ================= BASE ================= */
 * { box-sizing: border-box; }
 
 html, body {
@@ -19,7 +17,7 @@ html, body {
     background: #f2f2f2;
 }
 
-/* ================= TOPBAR ================= */
+/* TOPBAR */
 #topbar {
     height: 50px;
     background: #1f1f1f;
@@ -39,7 +37,7 @@ html, body {
     font-weight: bold;
 }
 
-/* ================= DRAWER ================= */
+/* DRAWER */
 #overlay {
     position: fixed;
     inset: 0;
@@ -62,7 +60,7 @@ html, body {
 
 #drawer.open { left: 0; }
 
-/* ================= CARDS ================= */
+/* CARDS */
 .card {
     background: #3a3a3a;
     padding: 10px;
@@ -80,22 +78,22 @@ input {
     padding: 6px;
 }
 
-/* ================= BUTTON ================= */
+/* BUTTON */
 .button {
     padding: 10px;
     background: #4caf50;
     border-radius: 8px;
     text-align: center;
     cursor: pointer;
+    margin-top: 6px;
 }
 
-/* ================= LEGAL VIEW ================= */
-#legalView {
-    display: none;
-}
+/* LEGAL VIEW */
+#legalView { display: none; }
 
-#legalView h3 {
-    margin-top: 0;
+#legalContent {
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 #backBtn {
@@ -104,7 +102,7 @@ input {
     color: #4caf50;
 }
 
-/* ================= TIMELINE ================= */
+/* TIMELINE */
 #main { padding: 20px; }
 
 #timeline {
@@ -116,7 +114,7 @@ input {
 #bar {
     height: 100%;
     width: 0%;
-    background: green;
+    background: linear-gradient(to right, #4caf50, #8bc34a);
 }
 
 #timer {
@@ -132,7 +130,6 @@ input {
     height: 100%;
     background: red;
 }
-
 </style>
 </head>
 
@@ -161,17 +158,17 @@ input {
         </div>
 
         <div class="card">
-            <div class="cardLabel">Dauer</div>
+            <div class="cardLabel">Dauer (Minuten)</div>
             <input type="number" id="duration" value="30">
         </div>
 
         <div class="card">
-            <div class="cardLabel">Timer</div>
+            <div class="cardLabel">Timer aktiv</div>
             <input type="checkbox" id="timerToggle" checked>
         </div>
 
         <div class="card">
-            <div class="cardLabel">Marker</div>
+            <div class="cardLabel">Marker Zeit</div>
             <input type="datetime-local" id="markerInput">
         </div>
 
@@ -198,7 +195,7 @@ input {
 
 <script>
 
-/* ================= DRAWER ================= */
+/* DRAWER */
 $("#burger").click(()=> {
     $("#drawer").addClass("open");
     $("#overlay").show();
@@ -209,96 +206,68 @@ $("#overlay").click(()=> {
     $("#overlay").hide();
 });
 
-/* ================= LEGAL NAV ================= */
+/* LEGAL */
 function showLegal(content){
     $("#settingsView").hide();
     $("#legalView").show();
     $("#legalContent").html(content);
 }
 
+/* IMPRESSUM */
 $("#openImpressum").click(()=> {
     showLegal(`
         <h3>Impressum</h3>
-        Johannes Parth<br>
-        Anhalterstraße 6<br>
-        80809 München<br>
+        Max Mustermann<br>
+        Musterstraße 1<br>
+        12345 Musterstadt<br>
         Deutschland<br><br>
-        E-Mail: coffeetogo.05@gmail.com
+        E-Mail: max@example.com
     `);
 });
 
+/* DATENSCHUTZ */
 $("#openDatenschutz").click(()=> {
     showLegal(`
-        <h3>Datenschutz</h3>
-        **Datenschutzerklärung**
+        <h3>Datenschutzerklärung</h3>
 
-1. Verantwortlicher
-   Verantwortlich für die Datenverarbeitung auf dieser Website ist:
-     Johannes Parth<br>
-        Anhalterstraße 6<br>
-        80809 München<br>
-        Deutschland<br><br>
-        E-Mail: coffeetogo.05@gmail.com
+        <b>1. Verantwortlicher</b><br>
+        Max Mustermann<br>
+        Musterstraße 1<br>
+        12345 Musterstadt<br>
+        E-Mail: max@example.com<br><br>
 
----
+        <b>2. Allgemeine Hinweise</b><br>
+        Diese Website dient als Tool zur Visualisierung von Zeitabläufen („RememberMe“).
+        Es werden keine personenbezogenen Daten aktiv gespeichert.<br><br>
 
-2. Allgemeine Hinweise
-   Diese Website dient als internes Tool zur Visualisierung von Zeitabläufen („RememberMe“). Eine aktive Speicherung personenbezogener Daten durch den Betreiber erfolgt nicht.
+        <b>3. Hosting über GitHub Pages</b><br>
+        Diese Website wird über GitHub Pages bereitgestellt.
+        Beim Aufruf der Seite werden technische Daten erfasst (z. B. IP-Adresse, Zeitpunkt).<br><br>
 
----
+        <b>4. Externe Bibliotheken</b><br>
+        Es wird jQuery über ein CDN geladen. Dabei kann eine Verbindung zu externen Servern entstehen.<br><br>
 
-3. Hosting über GitHub Pages
-   Diese Website wird über GitHub Pages bereitgestellt (GitHub Inc., USA).
-   Beim Aufruf der Website werden automatisch Informationen durch den Hosting-Anbieter erfasst (sogenannte Server-Logfiles). Dazu gehören insbesondere:
+        <b>5. Lokale Verarbeitung</b><br>
+        Alle Eingaben werden ausschließlich im Browser verarbeitet und nicht übertragen.<br><br>
 
-* IP-Adresse
-* Datum und Uhrzeit der Anfrage
-* Browsertyp und Betriebssystem
+        <b>6. Rechtsgrundlage</b><br>
+        Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an technischer Bereitstellung).<br><br>
 
-Diese Daten dienen der technischen Bereitstellung und Sicherheit der Website.
+        <b>7. Rechte</b><br>
+        Auskunft, Löschung, Berichtigung im Rahmen der gesetzlichen Bestimmungen.<br><br>
 
----
-
-4. Verwendung externer Bibliotheken
-   Diese Website verwendet die JavaScript-Bibliothek jQuery über ein Content Delivery Network (CDN).
-   Beim Laden der Seite kann eine Verbindung zu Servern des jeweiligen Anbieters hergestellt werden.
-
----
-
-5. Lokale Verarbeitung im Browser
-   Alle Eingaben (z. B. Zeitangaben) werden ausschließlich lokal im Browser verarbeitet.
-   Es erfolgt keine Speicherung oder Übertragung dieser Daten an den Betreiber.
-
----
-
-6. Rechtsgrundlage
-   Die Verarbeitung der Daten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der technischen Bereitstellung und Sicherheit der Website).
-
----
-
-7. Rechte der betroffenen Personen
-   Sie haben das Recht auf:
-
-* Auskunft über Ihre gespeicherten Daten
-* Berichtigung unrichtiger Daten
-* Löschung Ihrer Daten
-* Einschränkung der Verarbeitung
-
----
-
-8. Kontakt
-   Bei Fragen zum Datenschutz können Sie sich jederzeit an folgende E-Mail-Adresse wenden:
-   coffeetogo.05gmail.com
-
+        <b>8. Kontakt</b><br>
+        max@example.com
     `);
 });
 
+/* BACK */
 $("#backBtn").click(()=> {
     $("#legalView").hide();
     $("#settingsView").show();
 });
 
-/* ================= TIME ================= */
+/* TIME LOGIC */
 function toSec(t){
     let [h,m]=t.split(":");
     return h*3600+m*60;
@@ -311,7 +280,8 @@ function clamp(n,min,max){
 $("#duration").on("input", function(){
     let s=toSec($("#start").val());
     let e=s+this.value*60;
-    $("#end").val(new Date(e*1000).toISOString().substr(11,5));
+    let d=new Date(e*1000);
+    $("#end").val(d.toISOString().substr(11,5));
 });
 
 function update(){
