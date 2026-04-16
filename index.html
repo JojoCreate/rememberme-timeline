@@ -1,144 +1,122 @@
-<!-- NUR SCRIPT TEIL ERSETZEN (unter deinem bestehenden HTML) -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RememberMe</title>
+
+<link rel="icon" href="icon-192.png">
+
+<style>
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: #1f1f1f;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ================= LOADING SCREEN ================= */
+#loadingScreen {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#icon {
+    width: 90px;
+    height: 90px;
+}
+
+#text {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+/* progress bar */
+#barWrapper {
+    width: 240px;
+    height: 6px;
+    background: #444;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    transition: width 0.1s linear;
+}
+
+/* small hint */
+#hint {
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loadingScreen">
+
+    <img id="icon" src="icon-192.png" alt="icon">
+
+    <div id="text">Zeit ist relativ…</div>
+
+    <div id="barWrapper">
+        <div id="bar"></div>
+    </div>
+
+    <div id="hint">RememberMe wird gestartet</div>
+
+</div>
+
 <script>
 
-/* ================= DRAWER ================= */
-$("#burger").click(()=> {
-    $("#drawer").addClass("open");
-    $("#overlay").show();
-});
+const DURATION = 15000; // 15s
+const start = Date.now();
 
-$("#overlay").click(()=> {
-    $("#drawer").removeClass("open");
-    $("#overlay").hide();
-});
+function getGreeting() {
+    const h = new Date().getHours();
 
-/* ================= LEGAL SYSTEM ================= */
-function showLegal(content){
-    $("#settingsView").hide();
-    $("#legalView").show();
-    $("#legalContent").html(content);
+    if (h < 11) return "Guten Morgen ☀️";
+    if (h < 17) return "Es ist Mittag 🌤️";
+    if (h < 22) return "Guten Abend 🌙";
+    return "Gute Nacht 🌌";
 }
 
-/* IMPRESSUM */
-$("#openImpressum").click(()=> {
-    showLegal(`
-        <h3>Impressum</h3>
-        Max Mustermann<br>
-        Musterstraße 1<br>
-        12345 Musterstadt<br>
-        Deutschland<br><br>
-        E-Mail: max@example.com
-    `);
-});
+function loop() {
 
-/* DATENSCHUTZ */
-$("#openDatenschutz").click(()=> {
-    showLegal(`
-        <h3>Datenschutzerklärung</h3>
+    const elapsed = Date.now() - start;
+    const percent = Math.min((elapsed / DURATION) * 100, 100);
 
-        <b>1. Verantwortlicher</b><br>
-        Max Mustermann<br>
-        Musterstraße 1<br>
-        12345 Musterstadt<br>
-        E-Mail: max@example.com<br><br>
+    // progress bar
+    document.getElementById("bar").style.width = percent + "%";
 
-        <b>2. Allgemeine Hinweise</b><br>
-        Diese Website dient als Tool zur Visualisierung von Zeitabläufen („RememberMe“).<br><br>
+    // text
+    document.getElementById("text").innerText = getGreeting();
 
-        <b>3. Hosting</b><br>
-        Diese Website wird über GitHub Pages bereitgestellt.<br>
-        Dabei werden technische Daten wie IP-Adresse erfasst.<br><br>
-
-        <b>4. Externe Ressourcen</b><br>
-        jQuery wird über ein CDN geladen.<br><br>
-
-        <b>5. Lokale Verarbeitung</b><br>
-        Alle Eingaben bleiben im Browser.<br><br>
-
-        <b>6. Rechtsgrundlage</b><br>
-        Art. 6 Abs. 1 lit. f DSGVO<br><br>
-
-        <b>7. Rechte</b><br>
-        Auskunft, Löschung, Berichtigung<br><br>
-
-        <b>8. Kontakt</b><br>
-        max@example.com
-    `);
-});
-
-/* BACK BUTTON */
-$("#backBtn").click(()=> {
-    $("#legalView").hide();
-    $("#settingsView").show();
-});
-
-/* ================= TIME ================= */
-function toSec(t){
-    let [h,m]=t.split(":");
-    return h*3600+m*60;
+    // finish → redirect
+    if (percent >= 100) {
+        setTimeout(() => {
+            window.location.href = "rememberme.html";
+        }, 400);
+    }
 }
 
-function clamp(n,min,max){
-    return Math.max(min,Math.min(max,n));
-}
-
-/* ================= LOOP ================= */
-function update(){
-
-let now=new Date();
-let current=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
-
-let s=toSec($("#start").val());
-let e=toSec($("#end").val());
-let d=e-s;
-
-if(d<=0 || current<s || current>e){
-    $("#bar").css("width","0%");
-    $("#timer").html("");
-    $("#loadingOverlay").css("display","flex");
-    return;
-} else {
-    $("#loadingOverlay").hide();
-}
-
-let p=clamp((current-s)/d*100,0,100);
-$("#bar").css("width",p+"%");
-
-/* TIMER */
-if($("#timerToggle").is(":checked")){
-
-let r=e-current;
-
-let h=Math.floor(r/3600);
-let m=Math.floor((r%3600)/60);
-let s2=r%60;
-
-$("#timer").html(`
-<span class="flip">${h}</span> :
-<span class="flip">${String(m).padStart(2,'0')}</span>
-<span class="sec">${String(s2).padStart(2,'0')}</span>
-`);
-
-} else {
-$("#timer").html("");
-}
-
-/* MARKER */
-let marker=$("#markerInput").val();
-
-if(marker){
-let d2=new Date(marker);
-let sec=d2.getHours()*3600+d2.getMinutes()*60+d2.getSeconds();
-
-let mp=clamp((sec-s)/d*100,0,100);
-$("#marker").css("left",mp+"%").show();
-} else {
-$("#marker").hide();
-}
-
-}
-
-setInterval(update,1000);
-update();
+setInterval(loop, 100);
 
 </script>
+
+</body>
+</html>
