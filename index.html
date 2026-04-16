@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>RememberMe Timeline V1.3</title>
+<title>RememberMe</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -11,86 +11,63 @@
 <style>
 
 /* ================= BASE ================= */
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body {
     margin: 0;
     font-family: Arial;
-    height: 100%;
-    overflow-x: hidden;
     background: #f2f2f2;
 }
 
 /* ================= TOPBAR ================= */
 #topbar {
-    height: 52px;
+    height: 50px;
     background: #1f1f1f;
     color: white;
     display: flex;
     align-items: center;
     padding: 0 14px;
-    gap: 10px;
 }
 
 #burger {
     font-size: 22px;
     cursor: pointer;
+    margin-right: 10px;
 }
 
 #brand {
     font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* ================= OVERLAY ================= */
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.35);
-    display: none;
-    z-index: 10;
 }
 
 /* ================= DRAWER ================= */
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+}
+
 #drawer {
     position: fixed;
+    left: -320px;
     top: 0;
-    left: -340px;
-    width: 320px;
+    width: 300px;
     height: 100%;
     background: #2b2b2b;
     color: white;
-    padding: 14px;
-    transition: left 0.25s ease;
-    z-index: 11;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    padding: 15px;
+    transition: 0.3s;
+    overflow-y: auto;
 }
 
-#drawer.open {
-    left: 0;
-}
-
-/* ================= HEADER ================= */
-#drawerHeader {
-    font-size: 16px;
-    font-weight: bold;
-    margin-bottom: 6px;
-}
+#drawer.open { left: 0; }
 
 /* ================= CARDS ================= */
 .card {
     background: #3a3a3a;
-    border-radius: 10px;
     padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    border-radius: 10px;
+    margin-bottom: 10px;
 }
 
 .cardLabel {
@@ -98,78 +75,48 @@ html, body {
     opacity: 0.7;
 }
 
-.cardValue input {
+input {
     width: 100%;
     padding: 6px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
 }
 
-/* ================= SWITCH ================= */
-.switchRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.switch {
-    width: 40px;
-    height: 20px;
-    position: relative;
-}
-
-.switch input {
-    opacity: 0;
-}
-
-.slider {
-    position: absolute;
-    inset: 0;
-    background: #888;
-    border-radius: 20px;
-    transition: 0.2s;
-}
-
-.slider:before {
-    content: "";
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    top: 3px;
-    left: 3px;
-    background: white;
-    border-radius: 50%;
-    transition: 0.2s;
-}
-
-input:checked + .slider {
+/* ================= BUTTON ================= */
+.button {
+    padding: 10px;
     background: #4caf50;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
 }
 
-input:checked + .slider:before {
-    transform: translateX(20px);
+/* ================= LEGAL VIEW ================= */
+#legalView {
+    display: none;
 }
 
-/* ================= MAIN ================= */
-#main {
-    padding: 20px;
+#legalView h3 {
+    margin-top: 0;
+}
+
+#backBtn {
+    margin-bottom: 10px;
+    cursor: pointer;
+    color: #4caf50;
 }
 
 /* ================= TIMELINE ================= */
+#main { padding: 20px; }
+
 #timeline {
     position: relative;
     height: 45px;
     background: #ddd;
-    display: flex;
-    align-items: center;
-    margin-top: 20px;
 }
 
 #bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(to right, #4caf50, #8bc34a);
+    background: green;
 }
 
 #timer {
@@ -179,41 +126,11 @@ input:checked + .slider:before {
     font-weight: bold;
 }
 
-#timer small {
-    font-size: 10px;
-    vertical-align: super;
-    opacity: 0.8;
-}
-
 #marker {
     position: absolute;
     width: 4px;
     height: 100%;
     background: red;
-    display: none;
-}
-
-/* ================= LOADER ================= */
-#loadingOverlay {
-    position: absolute;
-    inset: 0;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    background: rgba(200,200,200,0.85);
-}
-
-.loader {
-    width: 18px;
-    height: 18px;
-    border: 3px solid #aaa;
-    border-top: 3px solid #333;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    100% { transform: rotate(360deg); }
 }
 
 </style>
@@ -221,165 +138,148 @@ input:checked + .slider:before {
 
 <body>
 
-<!-- TOPBAR -->
 <div id="topbar">
     <div id="burger">☰</div>
     <div id="brand">RememberMe 💡</div>
 </div>
 
-<!-- OVERLAY -->
 <div id="overlay"></div>
 
-<!-- DRAWER -->
 <div id="drawer">
 
-    <div id="drawerHeader">Einstellungen</div>
+    <!-- SETTINGS -->
+    <div id="settingsView">
 
-    <div class="card">
-        <div class="cardLabel">Startzeit</div>
-        <div class="cardValue">
+        <div class="card">
+            <div class="cardLabel">Startzeit</div>
             <input type="time" id="start" value="08:00">
         </div>
-    </div>
 
-    <div class="card">
-        <div class="cardLabel">Endzeit</div>
-        <div class="cardValue">
+        <div class="card">
+            <div class="cardLabel">Endzeit</div>
             <input type="time" id="end" value="08:30">
         </div>
-    </div>
 
-    <div class="card">
-        <div class="cardLabel">Dauer (Minuten)</div>
-        <div class="cardValue">
+        <div class="card">
+            <div class="cardLabel">Dauer</div>
             <input type="number" id="duration" value="30">
         </div>
-    </div>
 
-    <div class="card switchRow">
-        <div>
-            <div class="cardLabel">Timer aktiv</div>
+        <div class="card">
+            <div class="cardLabel">Timer</div>
+            <input type="checkbox" id="timerToggle" checked>
         </div>
 
-        <label class="switch">
-            <input type="checkbox" id="timerToggle" checked>
-            <span class="slider"></span>
-        </label>
-    </div>
-
-    <div class="card">
-        <div class="cardLabel">Marker Zeit</div>
-        <div class="cardValue">
+        <div class="card">
+            <div class="cardLabel">Marker</div>
             <input type="datetime-local" id="markerInput">
         </div>
+
+        <div class="button" id="openImpressum">Impressum</div>
+        <div class="button" id="openDatenschutz">Datenschutz</div>
+
+    </div>
+
+    <!-- LEGAL VIEW -->
+    <div id="legalView">
+        <div id="backBtn">← Zurück</div>
+        <div id="legalContent"></div>
     </div>
 
 </div>
 
-<!-- MAIN -->
 <div id="main">
-
-<div id="timeline">
-
-    <div id="bar"></div>
-    <div id="marker"></div>
-    <div id="timer"></div>
-
-    <div id="loadingOverlay">
-        <div class="loader"></div>
+    <div id="timeline">
+        <div id="bar"></div>
+        <div id="marker"></div>
+        <div id="timer"></div>
     </div>
-
-</div>
-
 </div>
 
 <script>
 
-/* ================= HELPERS ================= */
+/* ================= DRAWER ================= */
+$("#burger").click(()=> {
+    $("#drawer").addClass("open");
+    $("#overlay").show();
+});
+
+$("#overlay").click(()=> {
+    $("#drawer").removeClass("open");
+    $("#overlay").hide();
+});
+
+/* ================= LEGAL NAV ================= */
+function showLegal(content){
+    $("#settingsView").hide();
+    $("#legalView").show();
+    $("#legalContent").html(content);
+}
+
+$("#openImpressum").click(()=> {
+    showLegal(`
+        <h3>Impressum</h3>
+        Max Mustermann<br>
+        Musterstraße 1<br>
+        Deutschland<br><br>
+        E-Mail: max@example.com
+    `);
+});
+
+$("#openDatenschutz").click(()=> {
+    showLegal(`
+        <h3>Datenschutz</h3>
+        Diese Website wird über GitHub Pages betrieben.<br>
+        Es werden keine personenbezogenen Daten gespeichert.<br>
+        Technische Daten können durch den Hosting-Anbieter erfasst werden.
+    `);
+});
+
+$("#backBtn").click(()=> {
+    $("#legalView").hide();
+    $("#settingsView").show();
+});
+
+/* ================= TIME ================= */
 function toSec(t){
-    let [h,m] = t.split(":").map(Number);
-    return h*3600 + m*60;
+    let [h,m]=t.split(":");
+    return h*3600+m*60;
 }
 
 function clamp(n,min,max){
-    return Math.max(min, Math.min(max,n));
+    return Math.max(min,Math.min(max,n));
 }
 
-function format(sec){
-    sec = ((sec%86400)+86400)%86400;
-    let h = Math.floor(sec/3600);
-    let m = Math.floor((sec%3600)/60);
-    return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0');
-}
-
-/* ================= SYNC ================= */
 $("#duration").on("input", function(){
-    let start = toSec($("#start").val());
-    let end = start + parseInt(this.value||0)*60;
-    $("#end").val(format(end));
+    let s=toSec($("#start").val());
+    let e=s+this.value*60;
+    $("#end").val(new Date(e*1000).toISOString().substr(11,5));
 });
 
-$("#end").on("change", function(){
-    let start = toSec($("#start").val());
-    let end = toSec(this.value);
-    let dur = Math.max(1, Math.round((end-start)/60));
-    $("#duration").val(dur);
-});
-
-/* ================= DRAWER ================= */
-$("#burger").on("click", function(){
-    $("#drawer").addClass("open");
-    $("#overlay").fadeIn(150);
-});
-
-$("#overlay").on("click", function(){
-    $("#drawer").removeClass("open");
-    $("#overlay").fadeOut(150);
-});
-
-/* ================= LOOP ================= */
 function update(){
+    let now=new Date();
+    let current=now.getHours()*3600+now.getMinutes()*60;
 
-    let now = new Date();
-    let current = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+    let s=toSec($("#start").val());
+    let e=toSec($("#end").val());
+    let d=e-s;
 
-    let start = toSec($("#start").val());
-    let end = toSec($("#end").val());
-
-    let duration = end - start;
-
-    if(duration <= 0){
-        $("#loadingOverlay").show();
-        $("#bar").css("width","0%");
-        return;
-    } else {
-        $("#loadingOverlay").hide();
-    }
-
-    let percent = clamp(((current-start)/duration)*100,0,100);
-    $("#bar").css("width",percent+"%");
+    let p=clamp((current-s)/d*100,0,100);
+    $("#bar").css("width",p+"%");
 
     if($("#timerToggle").is(":checked")){
-        let remaining = Math.max(0,end-current);
-
-        let h = Math.floor(remaining/3600);
-        let m = Math.floor((remaining%3600)/60);
-        let s = remaining%60;
-
-        $("#timer").html(`${h}:${String(m).padStart(2,'0')}<small>${String(s).padStart(2,'0')}</small>`);
+        let r=e-current;
+        $("#timer").text(Math.max(0,Math.floor(r/60))+" min");
     } else {
-        $("#timer").html("");
+        $("#timer").text("");
     }
 
-    let marker = $("#markerInput").val();
+    let marker=$("#markerInput").val();
     if(marker){
-        let d = new Date(marker);
-        let sec = d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
-
-        let p = clamp(((sec-start)/duration)*100,0,100);
-        $("#marker").css("left",p+"%").show();
-    } else {
-        $("#marker").hide();
+        let m=new Date(marker);
+        let sec=m.getHours()*3600+m.getMinutes()*60;
+        let mp=clamp((sec-s)/d*100,0,100);
+        $("#marker").css("left",mp+"%");
     }
 }
 
