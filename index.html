@@ -2,17 +2,15 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>RememberMe Timeline V1.1</title>
+<title>RememberMe Timeline V1.2</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="manifest" href="manifest.json">
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <style>
 
-/* ================= BASE FIX ================= */
+/* ================= BASE ================= */
 * {
     box-sizing: border-box;
 }
@@ -20,58 +18,71 @@
 html, body {
     margin: 0;
     font-family: Arial;
-    width: 100%;
+    height: 100%;
     overflow-x: hidden;
+    background: #f0f0f0;
 }
 
-/* ================= MENU ================= */
-#menu {
-    height: 90px;
-    background: #333;
+/* ================= TOPBAR ================= */
+#topbar {
+    height: 50px;
+    background: #222;
     color: white;
     display: flex;
     align-items: center;
-    gap: 12px;
     padding: 0 15px;
-    flex-wrap: wrap;
 }
 
+#burger {
+    font-size: 22px;
+    cursor: pointer;
+}
+
+/* ================= DRAWER OVERLAY ================= */
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: none;
+    z-index: 10;
+}
+
+/* ================= DRAWER ================= */
+#drawer {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100%;
+    background: #333;
+    color: white;
+    padding: 15px;
+    transition: left 0.3s ease;
+    z-index: 11;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#drawer.open {
+    left: 0;
+}
+
+/* ================= INPUTS ================= */
 .menuGroup {
     display: flex;
     flex-direction: column;
     font-size: 12px;
-    min-width: 120px;
 }
 
 input {
+    padding: 5px;
     width: 100%;
-    max-width: 160px;
-}
-
-/* ================= BURGER ================= */
-#burger {
-    font-size: 22px;
-    cursor: pointer;
-    user-select: none;
-}
-
-/* Mobile Menu */
-@media (max-width: 600px) {
-    #menu {
-        display: none;
-        flex-direction: column;
-        height: auto;
-    }
-
-    #menu.open {
-        display: flex;
-    }
 }
 
 /* ================= MAIN ================= */
 #main {
     padding: 20px;
-    background: #f0f0f0;
 }
 
 /* ================= TIMELINE ================= */
@@ -81,16 +92,15 @@ input {
     background: #ddd;
     display: flex;
     align-items: center;
+    margin-top: 20px;
 }
 
-/* BAR */
 #bar {
     height: 100%;
     width: 0%;
     background: linear-gradient(to right, #4caf50, #8bc34a);
 }
 
-/* TIMER */
 #timer {
     position: absolute;
     width: 100%;
@@ -104,7 +114,6 @@ input {
     opacity: 0.8;
 }
 
-/* MARKER */
 #marker {
     position: absolute;
     width: 4px;
@@ -113,14 +122,14 @@ input {
     display: none;
 }
 
-/* OVERLAY */
-#overlay {
+/* ================= OVERLAY LOADER ================= */
+#loadingOverlay {
     position: absolute;
     inset: 0;
     display: none;
     justify-content: center;
     align-items: center;
-    background: rgba(200,200,200,0.8);
+    background: rgba(200,200,200,0.85);
 }
 
 .loader {
@@ -141,11 +150,16 @@ input {
 
 <body>
 
-<!-- BURGER -->
-<div id="burger">☰ Menu</div>
+<!-- TOPBAR -->
+<div id="topbar">
+    <div id="burger">☰ Menu</div>
+</div>
 
-<!-- MENU -->
-<div id="menu">
+<!-- DRAWER OVERLAY -->
+<div id="overlay"></div>
+
+<!-- DRAWER -->
+<div id="drawer">
 
     <div class="menuGroup">
         Start
@@ -159,7 +173,7 @@ input {
 
     <div class="menuGroup">
         Dauer (Min)
-        <input type="number" id="duration" min="1" value="30">
+        <input type="number" id="duration" value="30">
     </div>
 
     <div class="menuGroup">
@@ -183,7 +197,7 @@ input {
     <div id="marker"></div>
     <div id="timer"></div>
 
-    <div id="overlay">
+    <div id="loadingOverlay">
         <div class="loader"></div>
     </div>
 
@@ -192,13 +206,6 @@ input {
 </div>
 
 <script>
-
-/* ================= STATE ================= */
-let state = {
-    start: "08:00",
-    end: "08:30",
-    marker: null
-};
 
 /* ================= HELPERS ================= */
 function toSec(t){
@@ -210,49 +217,42 @@ function clamp(n,min,max){
     return Math.max(min, Math.min(max,n));
 }
 
+/* ================= DRAWER ================= */
+function openDrawer(){
+    $("#drawer").addClass("open");
+    $("#overlay").fadeIn(150);
+}
+
+function closeDrawer(){
+    $("#drawer").removeClass("open");
+    $("#overlay").fadeOut(150);
+}
+
+/* ================= EVENTS ================= */
+$("#burger").on("click", openDrawer);
+$("#overlay").on("click", closeDrawer);
+
 /* ================= SYNC ================= */
-function syncFromDuration(){
+$("#duration").on("input", function(){
     let start = toSec($("#start").val());
-    let dur = parseInt($("#duration").val() || 0);
-
-    let end = start + dur * 60;
+    let end = start + parseInt(this.value || 0)*60;
     $("#end").val(format(end));
-}
+});
 
-function syncFromEnd(){
+$("#end").on("change", function(){
     let start = toSec($("#start").val());
-    let end = toSec($("#end").val());
-
-    let dur = Math.max(1, Math.round((end - start)/60));
+    let end = toSec(this.value);
+    let dur = Math.max(1, Math.round((end-start)/60));
     $("#duration").val(dur);
-}
+});
 
+/* ================= FORMAT ================= */
 function format(sec){
-    sec = ((sec % 86400) + 86400) % 86400;
+    sec = ((sec%86400)+86400)%86400;
     let h = Math.floor(sec/3600);
     let m = Math.floor((sec%3600)/60);
     return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0');
 }
-
-/* ================= EVENTS ================= */
-$("#duration").on("input", syncFromDuration);
-$("#end").on("change", syncFromEnd);
-
-$("#timerToggle").on("change", function(){
-    if(!this.checked){
-        $("#timer").html("");
-    }
-});
-
-$("#burger").on("click", function(){
-    $("#menu").toggleClass("open");
-});
-
-$("#markerInput").on("change", function(){
-    let d = new Date(this.value);
-    state.marker =
-        d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
-});
 
 /* ================= LOOP ================= */
 function update(){
@@ -266,15 +266,15 @@ function update(){
     let duration = end - start;
 
     if(duration <= 0){
-        $("#overlay").show();
+        $("#loadingOverlay").show();
         $("#bar").css("width","0%");
         return;
     } else {
-        $("#overlay").hide();
+        $("#loadingOverlay").hide();
     }
 
     /* PROGRESS */
-    let percent = ((current - start)/duration)*100;
+    let percent = ((current-start)/duration)*100;
     percent = clamp(percent,0,100);
     $("#bar").css("width",percent+"%");
 
@@ -287,11 +287,17 @@ function update(){
         let s = remaining%60;
 
         $("#timer").html(`${h}:${String(m).padStart(2,'0')}<small>${String(s).padStart(2,'0')}</small>`);
+    } else {
+        $("#timer").html("");
     }
 
     /* MARKER */
-    if(state.marker !== null){
-        let p = clamp(((state.marker-start)/duration)*100,0,100);
+    let marker = $("#markerInput").val();
+    if(marker){
+        let d = new Date(marker);
+        let sec = d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds();
+
+        let p = clamp(((sec-start)/duration)*100,0,100);
         $("#marker").css("left",p+"%").show();
     } else {
         $("#marker").hide();
