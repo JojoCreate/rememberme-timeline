@@ -20,13 +20,13 @@ html, body {
     align-items: center;
 }
 
-/* ================= LOADER WRAPPER ================= */
+/* ================= WRAPPER ================= */
 #loadingScreen {
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
+    gap: 22px;
     position: relative;
 }
 
@@ -34,22 +34,29 @@ html, body {
 #icon {
     width: 90px;
     height: 90px;
+    margin-bottom: 4px;
 }
 
-/* TEXT */
-#text {
-    font-size: 16px;
-    opacity: 0.9;
+/* MAIN NOTE */
+#note {
+    font-size: 18px;
+    font-weight: 500;
+    max-width: 320px;
+    line-height: 1.4;
+    padding: 6px 10px;
+    text-align: center;
+    opacity: 0.95;
 }
 
-/* ================= PROGRESS BAR ================= */
+/* ================= BAR ================= */
 #barWrapper {
-    width: 320px;
-    height: 14px;
+    width: 340px;
+    height: 16px;
     background: #444;
-    border-radius: 0px; /* eckig */
+    border-radius: 0px;
     overflow: hidden;
     position: relative;
+    margin-top: 6px;
 }
 
 #bar {
@@ -59,45 +66,52 @@ html, body {
     transition: width 0.1s linear;
 }
 
-/* ================= POPUP EVENTS ================= */
-.event {
+/* ================= POP NOTES ================= */
+.popNote {
     position: absolute;
-    bottom: 70px;
+    bottom: 85px;
     background: #2ecc71;
     color: #111;
-    padding: 6px 10px;
-    font-size: 12px;
-    border-radius: 6px;
-    animation: pop 2.5s ease forwards;
-    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+    max-width: 200px;
+    line-height: 1.3;
+    animation: floatUp 4.5s ease forwards;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-@keyframes pop {
+
+@keyframes floatUp {
     0% {
-        transform: translateY(20px) scale(0.8);
+        transform: translateY(20px) scale(0.85);
         opacity: 0;
     }
-    20% {
+    15% {
         transform: translateY(0px) scale(1);
         opacity: 1;
     }
+    85% {
+        opacity: 1;
+    }
     100% {
-        transform: translateY(-40px) scale(0.95);
+        transform: translateY(-60px) scale(0.98);
         opacity: 0;
     }
 }
 
-#hint {
-    font-size: 12px;
-    opacity: 0.6;
-}
-
-/* layout helper */
+/* spacing helper */
 #stage {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+#hint {
+    font-size: 12px;
+    opacity: 0.5;
+    margin-top: 10px;
 }
 
 </style>
@@ -111,7 +125,8 @@ html, body {
 
         <img id="icon" src="icon-192.png">
 
-        <div id="text">Zeit ist relativ…</div>
+        <!-- ersetzt Greeting -->
+        <div id="note">System startet…</div>
 
         <div id="barWrapper">
             <div id="bar"></div>
@@ -119,7 +134,7 @@ html, body {
 
     </div>
 
-    <div id="hint">RememberMe startet…</div>
+    <div id="hint">RememberMe wird geladen</div>
 
 </div>
 
@@ -128,47 +143,29 @@ html, body {
 const DURATION = 15000;
 const start = Date.now();
 
-/* ================= FUNNY EVENTS ================= */
-const events = [
-    "Meeting: Kaffee wird kalt",
-    "Deadline: Panik-Phase beginnt",
-    "Sync: keiner hört zu",
-    "Reminder: Wasser trinken vergessen",
-    "Call: Mikro ist aus",
-    "Task: später machen (nie)",
-    "Break: 5 Minuten = 45 Minuten",
-    "Planung: komplett umgeworfen",
-    "Alarm: Snooze Meisterschaft",
-    "Notiz: eigentlich wichtig"
+/* ================= NOTIZEN ================= */
+const notes = [
+    "Meeting verschoben auf später. Sehr später.",
+    "Kaffee ist bereit. Priorität 1.",
+    "Deadline erinnert sich selbst nicht mehr.",
+    "Heute schon 3 Tabs geöffnet, ohne Grund.",
+    "Notiz: später erledigen (klassisch).",
+    "Kalender sagt nein, du sagst vielleicht.",
+    "Produktivität wurde kurz gesucht, nicht gefunden.",
+    "Pause geplant. Nie gestartet.",
+    "Taskliste wächst schneller als sie schrumpft.",
+    "Alles unter Kontrolle… theoretisch."
 ];
 
-/* ================= GREETING ================= */
-function getGreeting() {
-    const h = new Date().getHours();
-
-    if (h < 11) return "Guten Morgen ☀️";
-    if (h < 17) return "Es ist Mittag 🌤️";
-    if (h < 22) return "Guten Abend 🌙";
-    return "Gute Nacht 🌌";
-}
-
-/* ================= POP EVENT ================= */
-function spawnEvent() {
-
-    const text = events[Math.floor(Math.random() * events.length)];
-
+/* ================= NOTE DISPLAY ================= */
+function showNote(text) {
     const el = document.createElement("div");
-    el.className = "event";
+    el.className = "popNote";
     el.innerText = text;
-
-    // random x position above bar
-    el.style.left = (Math.random() * 260 + 20) + "px";
 
     document.getElementById("loadingScreen").appendChild(el);
 
-    setTimeout(() => {
-        el.remove();
-    }, 2500);
+    setTimeout(() => el.remove(), 4500);
 }
 
 /* ================= LOOP ================= */
@@ -178,7 +175,9 @@ function loop() {
     const percent = Math.min((elapsed / DURATION) * 100, 100);
 
     document.getElementById("bar").style.width = percent + "%";
-    document.getElementById("text").innerText = getGreeting();
+
+    // static system text
+    document.getElementById("note").innerText = "Zeit ist relativ…";
 
     if (percent >= 100) {
         setTimeout(() => {
@@ -187,16 +186,27 @@ function loop() {
     }
 }
 
-setInterval(loop, 100);
+/* ================= RANDOM NOTES ================= */
+let lastNoteTime = 0;
+const MIN_GAP = 5000; // 5 Sekunden
 
-/* ================= RANDOM EVENTS ================= */
-let eventTimer = setInterval(() => {
-    if (Date.now() - start > DURATION) {
-        clearInterval(eventTimer);
-        return;
-    }
-    spawnEvent();
-}, 1500);
+setInterval(() => {
+
+    const elapsed = Date.now() - start;
+    if (elapsed > DURATION) return;
+
+    const now = Date.now();
+
+    if (now - lastNoteTime < MIN_GAP) return;
+
+    lastNoteTime = now;
+
+    const random = notes[Math.floor(Math.random() * notes.length)];
+    showNote(random);
+
+}, 500);
+
+setInterval(loop, 100);
 
 </script>
 
