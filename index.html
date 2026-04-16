@@ -1,254 +1,76 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<title>RememberMe</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="icon" href="icon-192.png">
-
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-<style>
-* { box-sizing: border-box; }
-
-html, body {
-    margin: 0;
-    font-family: Arial;
-    background: #f2f2f2;
-}
-
-/* ================= LOADING SCREEN ================= */
-#loadingScreen {
-    position: fixed;
-    inset: 0;
-    background: #1f1f1f;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 999;
-}
-
-#loadingIcon {
-    width: 80px;
-    margin-bottom: 20px;
-}
-
-#loadingText {
-    margin-bottom: 20px;
-    font-size: 16px;
-}
-
-#loadingBarWrapper {
-    width: 200px;
-    height: 6px;
-    background: #444;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-#loadingBar {
-    height: 100%;
-    width: 0%;
-    background: #4caf50;
-}
-
-/* ================= TOPBAR ================= */
-#topbar {
-    height: 50px;
-    background: #1f1f1f;
-    color: white;
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-}
-
-#burger {
-    font-size: 22px;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
-#brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-}
-
-#brand img {
-    width: 20px;
-}
-
-/* ================= DRAWER ================= */
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: none;
-    z-index: 5;
-}
-
-#drawer {
-    position: fixed;
-    left: -320px;
-    top: 0;
-    width: 300px;
-    height: 100%;
-    background: #2b2b2b;
-    color: white;
-    padding: 15px;
-    transition: 0.3s;
-    overflow-y: auto;
-    z-index: 10;
-}
-
-#drawer.open { left: 0; }
-
-/* ================= TIMELINE ================= */
-#main { padding: 20px; }
-
-#timeline {
-    position: relative;
-    height: 45px;
-    background: #ddd;
-    overflow: hidden;
-}
-
-#bar {
-    position: absolute;
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(to right, #4caf50, #8bc34a);
-}
-
-#timer {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-}
-
-.flip {
-    background: #222;
-    color: #fff;
-    padding: 4px 6px;
-    margin: 0 2px;
-    border-radius: 4px;
-}
-
-.sec {
-    font-size: 10px;
-    vertical-align: super;
-}
-
-/* ================= MARKER ================= */
-#marker {
-    position: absolute;
-    width: 3px;
-    height: 100%;
-    background: red;
-}
-
-/* ================= LOADER ================= */
-#loadingOverlay {
-    position: absolute;
-    inset: 0;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    background: rgba(200,200,200,0.85);
-}
-
-.loader {
-    width: 18px;
-    height: 18px;
-    border: 3px solid #aaa;
-    border-top: 3px solid #333;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    100% { transform: rotate(360deg); }
-}
-</style>
-</head>
-
-<body>
-
-<!-- LOADING SCREEN -->
-<div id="loadingScreen">
-    <img id="loadingIcon" src="icon-192.png">
-    <div id="loadingText">Zeit ist relativ...</div>
-    <div id="loadingBarWrapper">
-        <div id="loadingBar"></div>
-    </div>
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none;">
-
-<div id="topbar">
-    <div id="burger">☰</div>
-    <div id="brand">
-        <img src="icon-192.png">
-        RememberMe
-    </div>
-</div>
-
-<div id="overlay"></div>
-<div id="drawer"></div>
-
-<div id="main">
-<div id="timeline">
-    <div id="bar"></div>
-    <div id="marker"></div>
-    <div id="timer"></div>
-    <div id="loadingOverlay"><div class="loader"></div></div>
-</div>
-</div>
-
-</div>
-
+<!-- NUR SCRIPT TEIL ERSETZEN (unter deinem bestehenden HTML) -->
 <script>
 
-/* ================= LOADING ================= */
-let loadDuration = 15000;
-let start = Date.now();
+/* ================= DRAWER ================= */
+$("#burger").click(()=> {
+    $("#drawer").addClass("open");
+    $("#overlay").show();
+});
 
-function updateLoading(){
+$("#overlay").click(()=> {
+    $("#drawer").removeClass("open");
+    $("#overlay").hide();
+});
 
-    let elapsed = Date.now() - start;
-    let percent = Math.min((elapsed/loadDuration)*100,100);
-
-    $("#loadingBar").css("width",percent+"%");
-
-    let now = new Date().getHours();
-
-    if(now < 11){
-        $("#loadingText").text("Guten Morgen");
-    } else if(now < 17){
-        $("#loadingText").text("Es ist Mittag");
-    } else if(now < 22){
-        $("#loadingText").text("Guten Abend");
-    } else {
-        $("#loadingText").text("Gute Nacht");
-    }
-
-    if(percent >= 100){
-        $("#loadingScreen").fadeOut(500, function(){
-            $("#app").fadeIn(300);
-        });
-    }
+/* ================= LEGAL SYSTEM ================= */
+function showLegal(content){
+    $("#settingsView").hide();
+    $("#legalView").show();
+    $("#legalContent").html(content);
 }
 
-setInterval(updateLoading,100);
+/* IMPRESSUM */
+$("#openImpressum").click(()=> {
+    showLegal(`
+        <h3>Impressum</h3>
+        Max Mustermann<br>
+        Musterstraße 1<br>
+        12345 Musterstadt<br>
+        Deutschland<br><br>
+        E-Mail: max@example.com
+    `);
+});
+
+/* DATENSCHUTZ */
+$("#openDatenschutz").click(()=> {
+    showLegal(`
+        <h3>Datenschutzerklärung</h3>
+
+        <b>1. Verantwortlicher</b><br>
+        Max Mustermann<br>
+        Musterstraße 1<br>
+        12345 Musterstadt<br>
+        E-Mail: max@example.com<br><br>
+
+        <b>2. Allgemeine Hinweise</b><br>
+        Diese Website dient als Tool zur Visualisierung von Zeitabläufen („RememberMe“).<br><br>
+
+        <b>3. Hosting</b><br>
+        Diese Website wird über GitHub Pages bereitgestellt.<br>
+        Dabei werden technische Daten wie IP-Adresse erfasst.<br><br>
+
+        <b>4. Externe Ressourcen</b><br>
+        jQuery wird über ein CDN geladen.<br><br>
+
+        <b>5. Lokale Verarbeitung</b><br>
+        Alle Eingaben bleiben im Browser.<br><br>
+
+        <b>6. Rechtsgrundlage</b><br>
+        Art. 6 Abs. 1 lit. f DSGVO<br><br>
+
+        <b>7. Rechte</b><br>
+        Auskunft, Löschung, Berichtigung<br><br>
+
+        <b>8. Kontakt</b><br>
+        max@example.com
+    `);
+});
+
+/* BACK BUTTON */
+$("#backBtn").click(()=> {
+    $("#legalView").hide();
+    $("#settingsView").show();
+});
 
 /* ================= TIME ================= */
 function toSec(t){
@@ -260,18 +82,59 @@ function clamp(n,min,max){
     return Math.max(min,Math.min(max,n));
 }
 
+/* ================= LOOP ================= */
 function update(){
 
 let now=new Date();
 let current=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
 
-let s=8*3600;
-let e=9*3600;
-
+let s=toSec($("#start").val());
+let e=toSec($("#end").val());
 let d=e-s;
+
+if(d<=0 || current<s || current>e){
+    $("#bar").css("width","0%");
+    $("#timer").html("");
+    $("#loadingOverlay").css("display","flex");
+    return;
+} else {
+    $("#loadingOverlay").hide();
+}
 
 let p=clamp((current-s)/d*100,0,100);
 $("#bar").css("width",p+"%");
+
+/* TIMER */
+if($("#timerToggle").is(":checked")){
+
+let r=e-current;
+
+let h=Math.floor(r/3600);
+let m=Math.floor((r%3600)/60);
+let s2=r%60;
+
+$("#timer").html(`
+<span class="flip">${h}</span> :
+<span class="flip">${String(m).padStart(2,'0')}</span>
+<span class="sec">${String(s2).padStart(2,'0')}</span>
+`);
+
+} else {
+$("#timer").html("");
+}
+
+/* MARKER */
+let marker=$("#markerInput").val();
+
+if(marker){
+let d2=new Date(marker);
+let sec=d2.getHours()*3600+d2.getMinutes()*60+d2.getSeconds();
+
+let mp=clamp((sec-s)/d*100,0,100);
+$("#marker").css("left",mp+"%").show();
+} else {
+$("#marker").hide();
+}
 
 }
 
@@ -279,6 +142,3 @@ setInterval(update,1000);
 update();
 
 </script>
-
-</body>
-</html>
