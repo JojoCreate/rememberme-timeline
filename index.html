@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>RememberMe Timeline V1.2</title>
+<title>RememberMe Timeline V1.3</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -20,17 +20,18 @@ html, body {
     font-family: Arial;
     height: 100%;
     overflow-x: hidden;
-    background: #f0f0f0;
+    background: #f2f2f2;
 }
 
 /* ================= TOPBAR ================= */
 #topbar {
-    height: 50px;
-    background: #222;
+    height: 52px;
+    background: #1f1f1f;
     color: white;
     display: flex;
     align-items: center;
-    padding: 0 15px;
+    padding: 0 14px;
+    gap: 10px;
 }
 
 #burger {
@@ -38,7 +39,14 @@ html, body {
     cursor: pointer;
 }
 
-/* ================= DRAWER OVERLAY ================= */
+#brand {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ================= OVERLAY ================= */
 #overlay {
     position: fixed;
     inset: 0;
@@ -51,13 +59,13 @@ html, body {
 #drawer {
     position: fixed;
     top: 0;
-    left: -320px;
-    width: 300px;
+    left: -340px;
+    width: 320px;
     height: 100%;
-    background: #333;
+    background: #2b2b2b;
     color: white;
-    padding: 15px;
-    transition: left 0.3s ease;
+    padding: 14px;
+    transition: left 0.25s ease;
     z-index: 11;
     display: flex;
     flex-direction: column;
@@ -68,16 +76,79 @@ html, body {
     left: 0;
 }
 
-/* ================= INPUTS ================= */
-.menuGroup {
-    display: flex;
-    flex-direction: column;
-    font-size: 12px;
+/* ================= HEADER ================= */
+#drawerHeader {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 6px;
 }
 
-input {
-    padding: 5px;
+/* ================= CARDS ================= */
+.card {
+    background: #3a3a3a;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cardLabel {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.cardValue input {
     width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+}
+
+/* ================= SWITCH ================= */
+.switchRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.switch {
+    width: 40px;
+    height: 20px;
+    position: relative;
+}
+
+.switch input {
+    opacity: 0;
+}
+
+.slider {
+    position: absolute;
+    inset: 0;
+    background: #888;
+    border-radius: 20px;
+    transition: 0.2s;
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    top: 3px;
+    left: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+input:checked + .slider {
+    background: #4caf50;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
 }
 
 /* ================= MAIN ================= */
@@ -122,7 +193,7 @@ input {
     display: none;
 }
 
-/* ================= OVERLAY LOADER ================= */
+/* ================= LOADER ================= */
 #loadingOverlay {
     position: absolute;
     inset: 0;
@@ -152,38 +223,55 @@ input {
 
 <!-- TOPBAR -->
 <div id="topbar">
-    <div id="burger">☰ Menu</div>
+    <div id="burger">☰</div>
+    <div id="brand">RememberMe 💡</div>
 </div>
 
-<!-- DRAWER OVERLAY -->
+<!-- OVERLAY -->
 <div id="overlay"></div>
 
 <!-- DRAWER -->
 <div id="drawer">
 
-    <div class="menuGroup">
-        Start
-        <input type="time" id="start" value="08:00">
+    <div id="drawerHeader">Einstellungen</div>
+
+    <div class="card">
+        <div class="cardLabel">Startzeit</div>
+        <div class="cardValue">
+            <input type="time" id="start" value="08:00">
+        </div>
     </div>
 
-    <div class="menuGroup">
-        Ende
-        <input type="time" id="end" value="08:30">
+    <div class="card">
+        <div class="cardLabel">Endzeit</div>
+        <div class="cardValue">
+            <input type="time" id="end" value="08:30">
+        </div>
     </div>
 
-    <div class="menuGroup">
-        Dauer (Min)
-        <input type="number" id="duration" value="30">
+    <div class="card">
+        <div class="cardLabel">Dauer (Minuten)</div>
+        <div class="cardValue">
+            <input type="number" id="duration" value="30">
+        </div>
     </div>
 
-    <div class="menuGroup">
-        Timer
-        <input type="checkbox" id="timerToggle" checked>
+    <div class="card switchRow">
+        <div>
+            <div class="cardLabel">Timer aktiv</div>
+        </div>
+
+        <label class="switch">
+            <input type="checkbox" id="timerToggle" checked>
+            <span class="slider"></span>
+        </label>
     </div>
 
-    <div class="menuGroup">
-        Marker
-        <input type="datetime-local" id="markerInput">
+    <div class="card">
+        <div class="cardLabel">Marker Zeit</div>
+        <div class="cardValue">
+            <input type="datetime-local" id="markerInput">
+        </div>
     </div>
 
 </div>
@@ -217,25 +305,17 @@ function clamp(n,min,max){
     return Math.max(min, Math.min(max,n));
 }
 
-/* ================= DRAWER ================= */
-function openDrawer(){
-    $("#drawer").addClass("open");
-    $("#overlay").fadeIn(150);
+function format(sec){
+    sec = ((sec%86400)+86400)%86400;
+    let h = Math.floor(sec/3600);
+    let m = Math.floor((sec%3600)/60);
+    return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0');
 }
-
-function closeDrawer(){
-    $("#drawer").removeClass("open");
-    $("#overlay").fadeOut(150);
-}
-
-/* ================= EVENTS ================= */
-$("#burger").on("click", openDrawer);
-$("#overlay").on("click", closeDrawer);
 
 /* ================= SYNC ================= */
 $("#duration").on("input", function(){
     let start = toSec($("#start").val());
-    let end = start + parseInt(this.value || 0)*60;
+    let end = start + parseInt(this.value||0)*60;
     $("#end").val(format(end));
 });
 
@@ -246,13 +326,16 @@ $("#end").on("change", function(){
     $("#duration").val(dur);
 });
 
-/* ================= FORMAT ================= */
-function format(sec){
-    sec = ((sec%86400)+86400)%86400;
-    let h = Math.floor(sec/3600);
-    let m = Math.floor((sec%3600)/60);
-    return String(h).padStart(2,'0')+":"+String(m).padStart(2,'0');
-}
+/* ================= DRAWER ================= */
+$("#burger").on("click", function(){
+    $("#drawer").addClass("open");
+    $("#overlay").fadeIn(150);
+});
+
+$("#overlay").on("click", function(){
+    $("#drawer").removeClass("open");
+    $("#overlay").fadeOut(150);
+});
 
 /* ================= LOOP ================= */
 function update(){
@@ -273,12 +356,9 @@ function update(){
         $("#loadingOverlay").hide();
     }
 
-    /* PROGRESS */
-    let percent = ((current-start)/duration)*100;
-    percent = clamp(percent,0,100);
+    let percent = clamp(((current-start)/duration)*100,0,100);
     $("#bar").css("width",percent+"%");
 
-    /* TIMER */
     if($("#timerToggle").is(":checked")){
         let remaining = Math.max(0,end-current);
 
@@ -291,7 +371,6 @@ function update(){
         $("#timer").html("");
     }
 
-    /* MARKER */
     let marker = $("#markerInput").val();
     if(marker){
         let d = new Date(marker);
