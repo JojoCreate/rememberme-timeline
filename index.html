@@ -16,6 +16,8 @@ html, body {
     height: 100%;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    overflow-x: hidden;
 }
 * {
     box-sizing: border-box;
@@ -30,6 +32,10 @@ html, body {
     gap: 16px;
     padding: 0 20px;
     box-sizing: border-box;
+    #menu {
+    flex-wrap: wrap;
+    gap: 10px;
+}
 }
 
 .menuGroup {
@@ -40,6 +46,9 @@ html, body {
 
 input {
     padding: 4px;
+    input {
+    max-width: 100%;
+}
 }
 
 /* ================= MAIN ================= */
