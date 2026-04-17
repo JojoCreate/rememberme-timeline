@@ -17,6 +17,16 @@ html, body {
     background: #f2f2f2;
 }
 
+/* EPAPER MODE */
+.epaper * {
+    transition: none !important;
+    animation: none !important;
+}
+
+.epaper #bar {
+    transition: none !important;
+}
+
 /* TOPBAR */
 #topbar {
     height: 50px;
@@ -78,6 +88,7 @@ html, body {
 input {
     width: 100%;
     padding: 6px;
+    margin-top: 4px;
 }
 
 /* BUTTON */
@@ -90,24 +101,8 @@ input {
     margin-top: 6px;
 }
 
-/* LEGAL */
-#legalView { display: none; }
-
-#legalContent {
-    font-size: 12px;
-    line-height: 1.4;
-}
-
-#backBtn {
-    margin-bottom: 10px;
-    cursor: pointer;
-    color: #4caf50;
-}
-
 /* MAIN */
-#main { 
-    padding: 30px; 
-}
+#main { padding: 30px; }
 
 /* TIME LABELS */
 #timeLabels {
@@ -115,7 +110,6 @@ input {
     justify-content:space-between;
     font-size:12px;
     margin-bottom:6px;
-    color:#333;
 }
 
 /* TIMELINE */
@@ -135,23 +129,24 @@ input {
     height: 100%;
     width: 0%;
     background: linear-gradient(to right, #4caf50, #8bc34a);
-    z-index: 1;
     border-radius: 12px;
     transition: width 0.5s linear;
 }
 
 /* MARKER */
-#marker {
+.markerBar {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    background: #ff5252;
-    border-radius: 50%;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 15%;
+    height: 70%;
+    background: rgba(255,82,82,0.7);
+    border-radius: 6px;
     z-index: 3;
-    display: none;
-    box-shadow: 0 0 6px rgba(255,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    padding: 0 4px;
 }
 
 /* TIMER */
@@ -162,10 +157,7 @@ input {
     justify-content: center;
     align-items: center;
     font-weight: bold;
-    z-index: 2;
-    pointer-events: none;
 }
-
 .flip {
     background: #222;
     color: #fff;
@@ -181,22 +173,25 @@ input {
     margin-left: 2px;
     opacity: 0.8;
 }
-
-/* LOADING */
 #loadingOverlay {
     position: absolute;
     inset: 0;
     display: none;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(200,200,200,0.85);
-    z-index: 4;
+    background: rgba(240,240,240,0.92);
+    z-index: 5;
+    text-align: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #333;
 }
 
 .loader {
     width: 18px;
     height: 18px;
-    border: 3px solid #aaa;
+    border: 3px solid #bbb;
     border-top: 3px solid #333;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -206,20 +201,9 @@ input {
     100% { transform: rotate(360deg); }
 }
 
-.markerBar {
-    position: absolute;
-    top: 15%;
-    height: 70%;
-    background: rgba(255,82,82,0.7);
-    border-radius: 6px;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: white;
-    padding: 0 4px;
-    pointer-events: none;
+.loadingText {
+    font-weight: 500;
+    opacity: 0.8;
 }
 </style>
 </head>
@@ -234,8 +218,6 @@ input {
 <div id="overlay"></div>
 
 <div id="drawer">
-
-<div id="settingsView">
 
 <div class="card">
 <div class="cardLabel">Startzeit</div>
@@ -257,31 +239,19 @@ input {
 <input type="checkbox" id="timerToggle" checked>
 </div>
 
+<!-- 🔥 NEU: EPAPER UI -->
+<div class="card">
+<div class="cardLabel">E-Paper Modus</div>
+<input type="checkbox" id="epaperToggle">
+</div>
+
 <div class="card">
 <div class="cardLabel">Marker</div>
-<input type="datetime-local" id="markerInput">
-</div>
-
-<div class="card">
-<div class="cardLabel">Weitere Marker</div>
-
 <input type="time" id="markerStart">
-<input type="number" id="markerDuration" placeholder="Dauer (Minuten)">
-<input type="text" id="markerLabel" placeholder="Label (optional)">
-
-<div class="button" id="addMarker">+ Marker hinzufügen</div>
-
-<div id="markerList" style="margin-top:8px;"></div>
-</div>
-
-<div class="button" id="openImpressum">Impressum</div>
-<div class="button" id="openDatenschutz">Datenschutz</div>
-
-</div>
-
-<div id="legalView">
-<div id="backBtn">← Zurück</div>
-<div id="legalContent"></div>
+<input type="number" id="markerDuration" placeholder="Dauer (Min)">
+<input type="text" id="markerLabel" placeholder="Label">
+<div class="button" id="addMarker">+ Marker</div>
+<div id="markerList"></div>
 </div>
 
 </div>
@@ -294,66 +264,36 @@ input {
 </div>
 
 <div id="timeline">
-<div id="bar"></div>
-<div id="marker"></div>
-<div id="timer"></div>
-
 <div id="loadingOverlay">
 <div class="loader"></div>
-Außerhalb der Zeitdarstellung
+<div class="loadingText">Zeitraum nicht darstellbar</div>
+</div>
+<div id="bar"></div>
+<div id="timer"></div>
 </div>
 
-</div>
 </div>
 
 <script>
 
-/* ===== MULTI MARKER SYSTEM (NEU) ===== */
+/* ================= EPAPER STATE ================= */
 
-let markers = [];
+let EPAPER_MODE = false;
 
-/* Marker hinzufügen */
-$("#addMarker").click(()=>{
+$("#epaperToggle").on("change", function(){
 
-    let start = $("#markerStart").val();
-    let duration = parseInt($("#markerDuration").val());
-    let label = $("#markerLabel").val();
+    EPAPER_MODE = $(this).is(":checked");
 
-    if(!start || !duration) return;
+    if(EPAPER_MODE){
+        $("body").addClass("epaper");
+    } else {
+        $("body").removeClass("epaper");
+    }
 
-    markers.push({
-        start: start,
-        dur: duration,
-        label: label
-    });
-
-    renderMarkerList();
+    update(); // sofortiger Refresh
 });
 
-/* Marker löschen */
-function deleteMarker(i){
-    markers.splice(i,1);
-    renderMarkerList();
-}
-
-/* Liste im Drawer anzeigen */
-function renderMarkerList(){
-
-    let html = "";
-
-    markers.forEach((m,i)=>{
-        html += `
-        <div style="font-size:12px; margin-bottom:4px;">
-            ${m.start} (${m.dur}m) ${m.label || ""}
-            <span style="color:red; cursor:pointer;" onclick="deleteMarker(${i})">✕</span>
-        </div>
-        `;
-    });
-
-    $("#markerList").html(html);
-}
-
-/* DRAWER */
+/* ================= DRAWER ================= */
 $("#burger").click(()=> {
     $("#drawer").addClass("open");
     $("#overlay").show();
@@ -364,27 +304,8 @@ $("#overlay").click(()=> {
     $("#overlay").hide();
 });
 
-/* LEGAL */
-function showLegal(content){
-    $("#settingsView").hide();
-    $("#legalView").show();
-    $("#legalContent").html(content);
-}
+/* ================= HELPERS ================= */
 
-$("#openImpressum").click(()=> {
-    showLegal(`<h3>Impressum</h3>Johannes Parth`);
-});
-
-$("#openDatenschutz").click(()=> {
-    showLegal(`<h3>Datenschutz</h3>Details...`);
-});
-
-$("#backBtn").click(()=> {
-    $("#legalView").hide();
-    $("#settingsView").show();
-});
-
-/* TIME HELPERS */
 function toSec(t){
     let [h,m]=t.split(":");
     return h*3600+m*60;
@@ -394,52 +315,71 @@ function clamp(n,min,max){
     return Math.max(min,Math.min(max,n));
 }
 
-/* SYNC LOGIC */
-let isUpdating = false;
+/* ================= SYNC ================= */
+
+let isUpdating=false;
 
 function syncFromDuration(){
     if(isUpdating || !$("#timerToggle").is(":checked")) return;
-    isUpdating = true;
+    isUpdating=true;
 
-    let start = $("#start").val();
-    let duration = parseInt($("#duration").val()) || 0;
+    let [h,m]=$("#start").val().split(":").map(Number);
+    let total=h*60+m+(parseInt($("#duration").val())||0);
 
-    let [h,m] = start.split(":").map(Number);
-    let total = h*60 + m + duration;
+    $("#end").val(
+        String(Math.floor(total/60)%24).padStart(2,"0")+":"+
+        String(total%60).padStart(2,"0")
+    );
 
-    let eh = Math.floor(total/60) % 24;
-    let em = total % 60;
-
-    $("#end").val(String(eh).padStart(2,"0")+":"+String(em).padStart(2,"0"));
-
-    isUpdating = false;
+    isUpdating=false;
 }
 
 function syncFromEnd(){
     if(isUpdating || !$("#timerToggle").is(":checked")) return;
-    isUpdating = true;
+    isUpdating=true;
 
-    let start = $("#start").val();
-    let end = $("#end").val();
+    let [sh,sm]=$("#start").val().split(":").map(Number);
+    let [eh,em]=$("#end").val().split(":").map(Number);
 
-    let [sh,sm] = start.split(":").map(Number);
-    let [eh,em] = end.split(":").map(Number);
-
-    let sMin = sh*60+sm;
-    let eMin = eh*60+em;
-
-    let diff = eMin - sMin;
-    if(diff < 0) diff += 1440;
+    let diff=(eh*60+em)-(sh*60+sm);
+    if(diff<0) diff+=1440;
 
     $("#duration").val(diff);
 
-    isUpdating = false;
+    isUpdating=false;
 }
 
-$("#start, #duration").on("input", syncFromDuration);
-$("#end").on("input change", syncFromEnd);
+$("#start,#duration").on("input change",syncFromDuration);
+$("#end").on("input change",syncFromEnd);
 
-/* LOOP */
+/* ================= MARKERS ================= */
+
+let markers=[];
+
+$("#addMarker").click(()=>{
+
+    let start=$("#markerStart").val();
+    let dur=parseInt($("#markerDuration").val());
+    let label=$("#markerLabel").val();
+
+    if(!start||!dur) return;
+
+    markers.push({start,dur,label});
+    renderMarkerList();
+});
+
+function renderMarkerList(){
+
+    let html="";
+    markers.forEach((m,i)=>{
+        html+=`${m.start} (${m.dur}m) ${m.label||""}<br>`;
+    });
+
+    $("#markerList").html(html);
+}
+
+/* ================= UPDATE LOOP ================= */
+
 function update(){
 
 let now=new Date();
@@ -448,44 +388,21 @@ let current=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
 let s=toSec($("#start").val());
 let e=toSec($("#end").val());
 let d=e-s;
-/* ===== ZUSÄTZLICHE MARKER RENDERN (NEU) ===== */
 
-$(".markerBar").remove();
+if(d<=0 || current < s || current > e){
 
-markers.forEach(m=>{
-
-    let ms = toSec(m.start);
-    let me = ms + (m.dur * 60);
-
-    let left = clamp((ms - s)/d*100,0,100);
-    let width = clamp((me - ms)/d*100,0,100);
-
-    let el = $(`
-        <div class="markerBar">
-            ${m.label || ""}
-        </div>
-    `);
-
-    el.css({
-        left: left + "%",
-        width: width + "%"
-    });
-
-    $("#timeline").append(el);
-});
-
-/* LABEL UPDATE */
-$("#startLabel").text($("#start").val());
-$("#endLabel").text($("#end").val());
-
-if(d<=0 || current<s || current>e){
     $("#bar").css("width","0%");
     $("#timer").html("");
+
     $("#loadingOverlay").css("display","flex");
     return;
+
 } else {
     $("#loadingOverlay").hide();
 }
+
+$("#startLabel").text($("#start").val());
+$("#endLabel").text($("#end").val());
 
 let p=clamp((current-s)/d*100,0,100);
 $("#bar").css("width",p+"%");
@@ -493,38 +410,46 @@ $("#bar").css("width",p+"%");
 /* TIMER */
 if($("#timerToggle").is(":checked")){
 let r=e-current;
-
 let h=Math.floor(r/3600);
 let m=Math.floor((r%3600)/60);
-let s2=r%60;
+let s=r%60;
 
 $("#timer").html(`
 <span class="flip">${h}</span> :
 <span class="flip">${String(m).padStart(2,'0')}</span>
-<span class="sec">${String(s2).padStart(2,'0')}</span>
+<span class="sec">${String(s).padStart(2,'0')}</span>
 `);
 } else {
 $("#timer").html("");
 }
 
-/* MARKER */
-let marker=$("#markerInput").val();
+/* MARKERS */
+$(".markerBar").remove();
 
-if(marker){
-let d2=new Date(marker);
-let sec=d2.getHours()*3600+d2.getMinutes()*60+d2.getSeconds();
+markers.forEach(m=>{
 
-let mp=clamp((sec-s)/d*100,0,100);
-$("#marker").css("left",mp+"%").show();
-} else {
-$("#marker").hide();
+    let ms=toSec(m.start);
+    let me=ms+(m.dur*60);
+
+    let left=clamp((ms-s)/d*100,0,100);
+    let width=clamp((me-ms)/d*100,0,100);
+
+    let el=$(`<div class="markerBar">${m.label||""}</div>`);
+
+    el.css({left:left+"%",width:width+"%"});
+
+    $("#timeline").append(el);
+});
+
 }
 
-}
+/* ================= REFRESH ENGINE ================= */
 
-setInterval(update,1000);
 update();
 
+setInterval(update, EPAPER_MODE ? 60000 : 1000);
+
 </script>
+
 </body>
 </html>
