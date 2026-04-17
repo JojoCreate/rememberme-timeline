@@ -371,11 +371,77 @@ $("#addMarker").click(()=>{
 function renderMarkerList(){
 
     let html="";
+
     markers.forEach((m,i)=>{
-        html+=`${m.start} (${m.dur}m) ${m.label||""}<br>`;
+
+        html+=`
+        <div style="margin-bottom:6px; font-size:12px; background:#444; padding:6px; border-radius:6px;">
+
+            <div>
+                <b>${m.label || "Marker"}</b>
+            </div>
+
+            <div>
+                ${m.start} (${m.dur}m)
+            </div>
+
+            <div style="margin-top:4px; display:flex; gap:5px;">
+
+                <button onclick="editMarker(${i})">Edit</button>
+                <button onclick="deleteMarker(${i})" style="color:red;">X</button>
+
+            </div>
+
+        </div>
+        `;
     });
 
     $("#markerList").html(html);
+}
+
+function deleteMarker(i){
+    markers.splice(i,1);
+    renderMarkerList();
+}
+
+function editMarker(i){
+
+    let m = markers[i];
+
+    $("#markerStart").val(m.start);
+    $("#markerDuration").val(m.dur);
+    $("#markerLabel").val(m.label);
+
+    $("#addMarker").text("Speichern");
+
+    $("#addMarker").off("click").on("click", function(){
+
+        markers[i] = {
+            start: $("#markerStart").val(),
+            dur: parseInt($("#markerDuration").val()),
+            label: $("#markerLabel").val()
+        };
+
+        resetAddButton();
+        renderMarkerList();
+    });
+}
+
+function resetAddButton(){
+
+    $("#addMarker").text("+ Marker");
+
+    $("#addMarker").off("click").on("click", function(){
+
+        let start=$("#markerStart").val();
+        let dur=parseInt($("#markerDuration").val());
+        let label=$("#markerLabel").val();
+
+        if(!start||!dur) return;
+
+        markers.push({start,dur,label});
+        renderMarkerList();
+    });
 }
 
 /* ================= UPDATE LOOP ================= */
@@ -446,7 +512,7 @@ markers.forEach(m=>{
 /* ================= REFRESH ENGINE ================= */
 
 update();
-
+resetAddButton();
 setInterval(update, EPAPER_MODE ? 60000 : 1000);
 
 </script>
