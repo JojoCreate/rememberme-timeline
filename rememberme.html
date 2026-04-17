@@ -104,14 +104,27 @@ input {
     color: #4caf50;
 }
 
-/* TIMELINE */
-#main { padding: 20px; }
+/* MAIN */
+#main { 
+    padding: 30px; 
+}
 
+/* TIME LABELS */
+#timeLabels {
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    margin-bottom:6px;
+    color:#333;
+}
+
+/* TIMELINE */
 #timeline {
     position: relative;
-    height: 45px;
+    height: 80px;
     background: #ddd;
     overflow: hidden;
+    border-radius: 12px;
 }
 
 /* BAR */
@@ -123,20 +136,25 @@ input {
     width: 0%;
     background: linear-gradient(to right, #4caf50, #8bc34a);
     z-index: 1;
+    border-radius: 12px;
+    transition: width 0.5s linear;
 }
 
 /* MARKER */
 #marker {
     position: absolute;
-    top: 0;
-    width: 3px;
-    height: 100%;
-    background: red;
+    width: 10px;
+    height: 10px;
+    background: #ff5252;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 3;
     display: none;
+    box-shadow: 0 0 6px rgba(255,0,0,0.6);
 }
 
-/* TIMER (FLIPCLOCK STYLE) */
+/* TIMER */
 #timer {
     position: absolute;
     inset: 0;
@@ -154,11 +172,11 @@ input {
     padding: 4px 6px;
     margin: 0 2px;
     border-radius: 4px;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .sec {
-    font-size: 10px;
+    font-size: 11px;
     vertical-align: super;
     margin-left: 2px;
     opacity: 0.8;
@@ -188,6 +206,21 @@ input {
     100% { transform: rotate(360deg); }
 }
 
+.markerBar {
+    position: absolute;
+    top: 15%;
+    height: 70%;
+    background: rgba(255,82,82,0.7);
+    border-radius: 6px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    padding: 0 4px;
+    pointer-events: none;
+}
 </style>
 </head>
 
@@ -229,6 +262,18 @@ input {
 <input type="datetime-local" id="markerInput">
 </div>
 
+<div class="card">
+<div class="cardLabel">Weitere Marker</div>
+
+<input type="time" id="markerStart">
+<input type="number" id="markerDuration" placeholder="Dauer (Minuten)">
+<input type="text" id="markerLabel" placeholder="Label (optional)">
+
+<div class="button" id="addMarker">+ Marker hinzufügen</div>
+
+<div id="markerList" style="margin-top:8px;"></div>
+</div>
+
 <div class="button" id="openImpressum">Impressum</div>
 <div class="button" id="openDatenschutz">Datenschutz</div>
 
@@ -242,21 +287,71 @@ input {
 </div>
 
 <div id="main">
-<div id="timeline">
 
+<div id="timeLabels">
+<span id="startLabel"></span>
+<span id="endLabel"></span>
+</div>
+
+<div id="timeline">
 <div id="bar"></div>
 <div id="marker"></div>
-
 <div id="timer"></div>
 
 <div id="loadingOverlay">
 <div class="loader"></div>
+Außerhalb der Zeitdarstellung
 </div>
 
 </div>
 </div>
 
 <script>
+
+/* ===== MULTI MARKER SYSTEM (NEU) ===== */
+
+let markers = [];
+
+/* Marker hinzufügen */
+$("#addMarker").click(()=>{
+
+    let start = $("#markerStart").val();
+    let duration = parseInt($("#markerDuration").val());
+    let label = $("#markerLabel").val();
+
+    if(!start || !duration) return;
+
+    markers.push({
+        start: start,
+        dur: duration,
+        label: label
+    });
+
+    renderMarkerList();
+});
+
+/* Marker löschen */
+function deleteMarker(i){
+    markers.splice(i,1);
+    renderMarkerList();
+}
+
+/* Liste im Drawer anzeigen */
+function renderMarkerList(){
+
+    let html = "";
+
+    markers.forEach((m,i)=>{
+        html += `
+        <div style="font-size:12px; margin-bottom:4px;">
+            ${m.start} (${m.dur}m) ${m.label || ""}
+            <span style="color:red; cursor:pointer;" onclick="deleteMarker(${i})">✕</span>
+        </div>
+        `;
+    });
+
+    $("#markerList").html(html);
+}
 
 /* DRAWER */
 $("#burger").click(()=> {
@@ -269,6 +364,26 @@ $("#overlay").click(()=> {
     $("#overlay").hide();
 });
 
+/* LEGAL */
+function showLegal(content){
+    $("#settingsView").hide();
+    $("#legalView").show();
+    $("#legalContent").html(content);
+}
+
+$("#openImpressum").click(()=> {
+    showLegal(`<h3>Impressum</h3>Johannes Parth`);
+});
+
+$("#openDatenschutz").click(()=> {
+    showLegal(`<h3>Datenschutz</h3>Details...`);
+});
+
+$("#backBtn").click(()=> {
+    $("#legalView").hide();
+    $("#settingsView").show();
+});
+
 /* TIME HELPERS */
 function toSec(t){
     let [h,m]=t.split(":");
@@ -279,6 +394,51 @@ function clamp(n,min,max){
     return Math.max(min,Math.min(max,n));
 }
 
+/* SYNC LOGIC */
+let isUpdating = false;
+
+function syncFromDuration(){
+    if(isUpdating || !$("#timerToggle").is(":checked")) return;
+    isUpdating = true;
+
+    let start = $("#start").val();
+    let duration = parseInt($("#duration").val()) || 0;
+
+    let [h,m] = start.split(":").map(Number);
+    let total = h*60 + m + duration;
+
+    let eh = Math.floor(total/60) % 24;
+    let em = total % 60;
+
+    $("#end").val(String(eh).padStart(2,"0")+":"+String(em).padStart(2,"0"));
+
+    isUpdating = false;
+}
+
+function syncFromEnd(){
+    if(isUpdating || !$("#timerToggle").is(":checked")) return;
+    isUpdating = true;
+
+    let start = $("#start").val();
+    let end = $("#end").val();
+
+    let [sh,sm] = start.split(":").map(Number);
+    let [eh,em] = end.split(":").map(Number);
+
+    let sMin = sh*60+sm;
+    let eMin = eh*60+em;
+
+    let diff = eMin - sMin;
+    if(diff < 0) diff += 1440;
+
+    $("#duration").val(diff);
+
+    isUpdating = false;
+}
+
+$("#start, #duration").on("input", syncFromDuration);
+$("#end").on("input change", syncFromEnd);
+
 /* LOOP */
 function update(){
 
@@ -288,153 +448,35 @@ let current=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
 let s=toSec($("#start").val());
 let e=toSec($("#end").val());
 let d=e-s;
+/* ===== ZUSÄTZLICHE MARKER RENDERN (NEU) ===== */
 
-/* OUTSIDE RANGE */
-if(d<=0 || current<s || current>e){
-    $("#bar").css("width","0%");
-    $("#timer").html("");
-    $("#loadingOverlay").css("display","flex");
-    return;
-} else {
-    $("#loadingOverlay").hide();
-}
+$(".markerBar").remove();
 
-/* BAR */
-let p=clamp((current-s)/d*100,0,100);
-$("#bar").css("width",p+"%");
+markers.forEach(m=>{
 
-/* TIMER */
-if($("#timerToggle").is(":checked")){
+    let ms = toSec(m.start);
+    let me = ms + (m.dur * 60);
 
-let r=e-current;
+    let left = clamp((ms - s)/d*100,0,100);
+    let width = clamp((me - ms)/d*100,0,100);
 
-let h=Math.floor(r/3600);
-let m=Math.floor((r%3600)/60);
-let s2=r%60;
-
-$("#timer").html(`
-<span class="flip">${h}</span> :
-<span class="flip">${String(m).padStart(2,'0')}</span>
-<span class="sec">${String(s2).padStart(2,'0')}</span>
-`);
-
-} else {
-$("#timer").html("");
-}
-
-/* MARKER */
-let marker=$("#markerInput").val();
-
-if(marker){
-let d2=new Date(marker);
-let sec=d2.getHours()*3600+d2.getMinutes()*60+d2.getSeconds();
-
-let mp=clamp((sec-s)/d*100,0,100);
-$("#marker").css("left",mp+"%").show();
-} else {
-$("#marker").hide();
-}
-
-}
-
-setInterval(update,1000);
-update();
-
-</script>
-<!-- NUR SCRIPT TEIL ERSETZEN (unter deinem bestehenden HTML) -->
-<script>
-
-/* ================= DRAWER ================= */
-$("#burger").click(()=> {
-    $("#drawer").addClass("open");
-    $("#overlay").show();
-});
-
-$("#overlay").click(()=> {
-    $("#drawer").removeClass("open");
-    $("#overlay").hide();
-});
-
-/* ================= LEGAL SYSTEM ================= */
-function showLegal(content){
-    $("#settingsView").hide();
-    $("#legalView").show();
-    $("#legalContent").html(content);
-}
-
-/* IMPRESSUM */
-$("#openImpressum").click(()=> {
-    showLegal(`
-        <h3>Impressum</h3>
-        Johannes Parth<br>
-        Anhalter Straße 6<br>
-        80809 München<br>
-        Deutschland<br><br>
-        E-Mail: coffeetogo.05@gmail.com
+    let el = $(`
+        <div class="markerBar">
+            ${m.label || ""}
+        </div>
     `);
+
+    el.css({
+        left: left + "%",
+        width: width + "%"
+    });
+
+    $("#timeline").append(el);
 });
 
-/* DATENSCHUTZ */
-$("#openDatenschutz").click(()=> {
-    showLegal(`
-        <h3>Datenschutzerklärung</h3>
-
-        <b>1. Verantwortlicher</b><br>
-       Johannes Parth<br>
-        Anhalter Straße 6<br>
-        80809 München<br>
-        Deutschland<br><br>
-        E-Mail: coffeetogo.05@gmail.com</b><br>
-        
-        <b>2. Allgemeine Hinweise</b><br>
-        Diese Website dient als Tool zur Visualisierung von Zeitabläufen („RememberMe“).<br><br>
-
-        <b>3. Hosting</b><br>
-        Diese Website wird über GitHub Pages bereitgestellt.<br>
-        Dabei werden technische Daten wie IP-Adresse erfasst.<br><br>
-
-        <b>4. Externe Ressourcen</b><br>
-        jQuery wird über ein CDN geladen.<br><br>
-
-        <b>5. Lokale Verarbeitung</b><br>
-        Alle Eingaben bleiben im Browser.<br><br>
-
-        <b>6. Rechtsgrundlage</b><br>
-        Art. 6 Abs. 1 lit. f DSGVO<br><br>
-
-        <b>7. Rechte</b><br>
-        Auskunft, Löschung, Berichtigung<br><br>
-
-        <b>8. Kontakt</b><br>
-        max@example.com
-    `);
-});
-
-/* BACK BUTTON */
-$("#backBtn").click(()=> {
-    $("#legalView").hide();
-    $("#settingsView").show();
-});
-
-/* ================= TIME ================= */
-function toSec(t){
-    let [h,m]=t.split(":");
-    return h*3600+m*60;
-}
-
-function clamp(n,min,max){
-    return Math.max(min,Math.min(max,n));
-}
-
-/* ================= LOOP ================= */
-function update(){
-
-let now=new Date();
-let current=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
-
-let s=toSec($("#start").val());
-let e=toSec($("#end").val());
-let d=e-s;
+/* LABEL UPDATE */
+$("#startLabel").text($("#start").val());
+$("#endLabel").text($("#end").val());
 
 if(d<=0 || current<s || current>e){
     $("#bar").css("width","0%");
@@ -450,7 +492,6 @@ $("#bar").css("width",p+"%");
 
 /* TIMER */
 if($("#timerToggle").is(":checked")){
-
 let r=e-current;
 
 let h=Math.floor(r/3600);
@@ -462,7 +503,6 @@ $("#timer").html(`
 <span class="flip">${String(m).padStart(2,'0')}</span>
 <span class="sec">${String(s2).padStart(2,'0')}</span>
 `);
-
 } else {
 $("#timer").html("");
 }
