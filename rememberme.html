@@ -17,7 +17,6 @@ html, body {
     background: #f2f2f2;
 }
 
-/* EPAPER MODE */
 .epaper * {
     transition: none !important;
     animation: none !important;
@@ -27,7 +26,6 @@ html, body {
     transition: none !important;
 }
 
-/* TOPBAR */
 #topbar {
     height: 50px;
     background: #1f1f1f;
@@ -47,7 +45,6 @@ html, body {
     font-weight: bold;
 }
 
-/* DRAWER */
 #overlay {
     position: fixed;
     inset: 0;
@@ -72,7 +69,6 @@ html, body {
 
 #drawer.open { left: 0; }
 
-/* CARDS */
 .card {
     background: #3a3a3a;
     padding: 10px;
@@ -91,7 +87,6 @@ input {
     margin-top: 4px;
 }
 
-/* BUTTON */
 .button {
     padding: 10px;
     background: #4caf50;
@@ -101,10 +96,8 @@ input {
     margin-top: 6px;
 }
 
-/* MAIN */
 #main { padding: 30px; }
 
-/* TIME LABELS */
 #timeLabels {
     display:flex;
     justify-content:space-between;
@@ -112,7 +105,13 @@ input {
     margin-bottom:6px;
 }
 
-/* TIMELINE */
+/* NEU: Datumsanzeige */
+#currentDayLabel {
+    text-align:center;
+    font-weight:bold;
+    margin-bottom:8px;
+}
+
 #timeline {
     position: relative;
     height: 80px;
@@ -121,7 +120,6 @@ input {
     border-radius: 12px;
 }
 
-/* BAR */
 #bar {
     position: absolute;
     left: 0;
@@ -133,7 +131,6 @@ input {
     transition: width 0.5s linear;
 }
 
-/* MARKER */
 .markerBar {
     position: absolute;
     top: 15%;
@@ -149,7 +146,6 @@ input {
     padding: 0 4px;
 }
 
-/* TIMER */
 #timer {
     position: absolute;
     inset: 0;
@@ -158,6 +154,7 @@ input {
     align-items: center;
     font-weight: bold;
 }
+
 .flip {
     background: #222;
     color: #fff;
@@ -173,6 +170,7 @@ input {
     margin-left: 2px;
     opacity: 0.8;
 }
+
 #loadingOverlay {
     position: absolute;
     inset: 0;
@@ -186,6 +184,7 @@ input {
     gap: 10px;
     font-size: 14px;
     color: #333;
+    pointer-events: none;
 }
 
 .loader {
@@ -239,7 +238,6 @@ input {
 <input type="checkbox" id="timerToggle" checked>
 </div>
 
-<!-- 🔥 NEU: EPAPER UI -->
 <div class="card">
 <div class="cardLabel">E-Paper Modus</div>
 <input type="checkbox" id="epaperToggle">
@@ -263,6 +261,8 @@ input {
 <span id="endLabel"></span>
 </div>
 
+<div id="currentDayLabel"></div>
+
 <div id="timeline">
 <div id="loadingOverlay">
 <div class="loader"></div>
@@ -276,12 +276,32 @@ input {
 
 <script>
 
+/* ================= DATE SYSTEM ================= */
+
+let currentDayOffset = 0;
+
+function getCurrentDate(offset=0){
+    let d = new Date();
+    d.setDate(d.getDate()+offset);
+    return d.toISOString().split("T")[0];
+}
+
+function formatDate(offset){
+    let d = new Date();
+    d.setDate(d.getDate()+offset);
+
+    return d.toLocaleDateString("de-DE", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit"
+    });
+}
+
 /* ================= EPAPER STATE ================= */
 
 let EPAPER_MODE = false;
 
 $("#epaperToggle").on("change", function(){
-
     EPAPER_MODE = $(this).is(":checked");
 
     if(EPAPER_MODE){
@@ -290,10 +310,11 @@ $("#epaperToggle").on("change", function(){
         $("body").removeClass("epaper");
     }
 
-    update(); // sofortiger Refresh
+    update();
 });
 
 /* ================= DRAWER ================= */
+
 $("#burger").click(()=> {
     $("#drawer").addClass("open");
     $("#overlay").show();
@@ -364,36 +385,34 @@ $("#addMarker").click(()=>{
 
     if(!start||!dur) return;
 
-    markers.push({start,dur,label});
+    markers.push({
+        date: getCurrentDate(currentDayOffset),
+        start,
+        dur,
+        label
+    });
+
     renderMarkerList();
 });
 
 function renderMarkerList(){
 
     let html="";
+    let currentDate = getCurrentDate(currentDayOffset);
 
-    markers.forEach((m,i)=>{
+    markers
+    .filter(m => m.date === currentDate)
+    .forEach((m,i)=>{
 
         html+=`
         <div style="margin-bottom:6px; font-size:12px; background:#444; padding:6px; border-radius:6px;">
-
-            <div>
-                <b>${m.label || "Marker"}</b>
-            </div>
-
-            <div>
-                ${m.start} (${m.dur}m)
-            </div>
-
+            <div><b>${m.label || "Marker"}</b></div>
+            <div>${m.start} (${m.dur}m)</div>
             <div style="margin-top:4px; display:flex; gap:5px;">
-
                 <button onclick="editMarker(${i})">Edit</button>
                 <button onclick="deleteMarker(${i})" style="color:red;">X</button>
-
             </div>
-
-        </div>
-        `;
+        </div>`;
     });
 
     $("#markerList").html(html);
@@ -417,6 +436,7 @@ function editMarker(i){
     $("#addMarker").off("click").on("click", function(){
 
         markers[i] = {
+            ...markers[i],
             start: $("#markerStart").val(),
             dur: parseInt($("#markerDuration").val()),
             label: $("#markerLabel").val()
@@ -428,7 +448,6 @@ function editMarker(i){
 }
 
 function resetAddButton(){
-
     $("#addMarker").text("+ Marker");
 
     $("#addMarker").off("click").on("click", function(){
@@ -439,7 +458,13 @@ function resetAddButton(){
 
         if(!start||!dur) return;
 
-        markers.push({start,dur,label});
+        markers.push({
+            date: getCurrentDate(currentDayOffset),
+            start,
+            dur,
+            label
+        });
+
         renderMarkerList();
     });
 }
@@ -447,6 +472,8 @@ function resetAddButton(){
 /* ================= UPDATE LOOP ================= */
 
 function update(){
+
+$("#currentDayLabel").text(formatDate(currentDayOffset));
 
 let now=new Date();
 let current=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
@@ -456,13 +483,10 @@ let e=toSec($("#end").val());
 let d=e-s;
 
 if(d<=0 || current < s || current > e){
-
     $("#bar").css("width","0%");
     $("#timer").html("");
-
     $("#loadingOverlay").css("display","flex");
     return;
-
 } else {
     $("#loadingOverlay").hide();
 }
@@ -492,7 +516,11 @@ $("#timer").html("");
 /* MARKERS */
 $(".markerBar").remove();
 
-markers.forEach(m=>{
+let currentDate = getCurrentDate(currentDayOffset);
+
+markers
+.filter(m => m.date === currentDate)
+.forEach(m=>{
 
     let ms=toSec(m.start);
     let me=ms+(m.dur*60);
@@ -501,17 +529,138 @@ markers.forEach(m=>{
     let width=clamp((me-ms)/d*100,0,100);
 
     let el=$(`<div class="markerBar">${m.label||""}</div>`);
-
     el.css({left:left+"%",width:width+"%"});
 
     $("#timeline").append(el);
 });
 
 }
+/* ================= UNIFIED DRAG SYSTEM ================= */
 
-/* ================= REFRESH ENGINE ================= */
+let drag = {
+    active: false,
+    startX: 0,
+    currentX: 0
+};
+
+function getX(e){
+    return e.originalEvent.touches
+        ? e.originalEvent.touches[0].clientX
+        : e.clientX;
+}
+
+/* START */
+$("#timeline").on("mousedown touchstart", function(e){
+    drag.active = true;
+    drag.startX = getX(e);
+    drag.currentX = drag.startX;
+
+    $("#timeline").css("transition","none");
+});
+
+/* MOVE */
+$(document).on("mousemove touchmove", function(e){
+    if(!drag.active) return;
+
+    drag.currentX = getX(e);
+
+    let diff = drag.currentX - drag.startX;
+
+    // live movement
+    $("#timeline").css("transform", `translateX(${diff}px)`);
+});
+
+/* END */
+$(document).on("mouseup touchend", function(){
+
+    if(!drag.active) return;
+    drag.active = false;
+
+    let diff = drag.currentX - drag.startX;
+    let threshold = 80;
+
+    $("#timeline").css("transition","transform 0.25s ease");
+
+    if(Math.abs(diff) > threshold){
+
+        if(diff < 0){
+            currentDayOffset++;
+        } else {
+            currentDayOffset--;
+        }
+
+        // slide out effect
+        $("#timeline").css("transform", `translateX(${diff < 0 ? -120 : 120}%)`);
+
+        setTimeout(()=>{
+            $("#timeline").css("transition","none");
+            $("#timeline").css("transform","");
+
+            update();
+            renderMarkerList();
+        }, 200);
+
+    } else {
+        // snap back
+        $("#timeline").css("transform","translateX(0)");
+    }
+
+    setTimeout(()=>{
+        $("#timeline").css("transition","none");
+    }, 250);
+});
+/* ===== DRAG RELEASE + SNAP ===== */
+
+$(document).on("mouseup touchend", function(){
+
+    if(!isDraggingTimeline) return;
+
+    isDraggingTimeline = false;
+
+    let diff = dragCurrentX - dragStartX;
+    let threshold = 80;
+
+$("#timeline").css("transition","transform 0.25s");
+
+    if(Math.abs(diff) > threshold){
+
+        if(diff < 0){
+            currentDayOffset++;
+        } else {
+            currentDayOffset--;
+        }
+
+        // raus sliden
+        $("#timeline").css("transform", `translateX(${diff < 0 ? -100 : 100}%)`);
+
+        setTimeout(()=>{
+            $("#timeline").css("transition","none");
+            $("#timeline").css("transform","");
+            update();
+            renderMarkerList();
+        },200);
+
+    } else {
+        // zurück snappen
+        $("#timeline").css("transform","translateX(0)");
+    }
+
+    setTimeout(()=>{
+        $("#timeline").css("transition","none");
+    },250);
+});
+
+/* ===== EPAPER MODE ANIMATION CONTROL ===== */
+
+function getAnimDuration(){
+    return EPAPER_MODE ? 0 : 250;
+}
+
+
+/* ================= INIT ================= */
 
 update();
+renderMarkerList();
 resetAddButton();
 setInterval(update, EPAPER_MODE ? 60000 : 1000);
 
